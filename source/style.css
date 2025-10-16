@@ -1,0 +1,58 @@
+:root {
+	--fillable: #d78717;
+	--focus: #3e8137;
+	--font-main: "Rubik var", Rubik, system-ui, sans-serif;
+}
+pre {
+	min-height: 300px;
+	font-family: var(--font-mono);
+	font-size: 14px;
+	padding: var(--s-3);
+}
+.field {
+	--measure: 600px;
+}
+.field-label {
+	font-weight: 600;
+	font-style: italic;
+}
+header {
+	font-weight: bold;
+	background: #ec8e0a;
+	color: #402805;
+	padding: var(--s-1);
+}
+main {
+	padding: var(--s-1);
+}
+footer {
+	--anchor: var(--color);
+	text-align: center;
+	font-style: italic;
+	opacity: 0.8;
+	padding: 1em;
+}
+footer a {
+	font-weight: bold;
+}
+button,
+a.button {
+	background: #ec8e0a;
+	color: #402805;
+	font-weight: bold;
+	padding: var(--s-3) var(--s-1);
+	text-decoration: none;
+	border: 2px solid black;
+	display: inline-block;
+	cursor: pointer;
+}
+button[disabled],
+a.button[disabled] {
+	cursor: not-allowed;
+	opacity: 0.6;
+	font-style: italic;
+}
+
+progress[disabled] {
+	display: none;
+}

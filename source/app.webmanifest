@@ -1,0 +1,10 @@
+{
+	"$schema": "https://json.schemastore.org/web-manifest.json",
+	"name": "m4b Editor",
+	"short_name": "m4b editor",
+	"start_url": ".",
+	"scope": "/",
+	"display": "standalone",
+	"theme_color": "#ec8e0a",
+	"icons": [{ "src": "icon.png", "type": "image/png", "sizes": "192x192" }]
+}

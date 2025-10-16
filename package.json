@@ -1,0 +1,14 @@
+{
+	"private": true,
+	"type": "module",
+	"devDependencies": {
+		"esbuild": "^0.25.11",
+		"prettier": "^3.6.2"
+	},
+	"prettier": {},
+	"dependencies": {
+		"@ffmpeg/core": "^0.12.10",
+		"@ffmpeg/ffmpeg": "^0.12.15",
+		"@ffmpeg/util": "^0.12.2"
+	}
+}

@@ -1,0 +1,7 @@
+#
+# Files to exclude from prettier formatting
+#
+
+node_modules
+source/ffmpeg
+.nova

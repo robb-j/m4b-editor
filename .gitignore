@@ -1,0 +1,7 @@
+#
+# Files to ignore from version control
+#
+
+.DS_Store
+node_modules
+*.env
