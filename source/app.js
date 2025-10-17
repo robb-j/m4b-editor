@@ -4,6 +4,11 @@ import { FFmpeg, fetchFile } from "./ffmpeg/client.js";
 const inputs = {
 	files: document.getElementById("files"),
 	artwork: document.getElementById("artwork"),
+	sampleRate: document.getElementById("sampleRate"),
+	bitRate: document.getElementById("bitRate"),
+	bitDepth: document.getElementById("bitDepth"),
+	legacyDevice: document.getElementById("legacyDevice"),
+	codec: document.getElementById("codec"),
 };
 
 /** @satisfies {Record<string, HTMLElement>} */
@@ -14,6 +19,7 @@ const elements = {
 	download: document.getElementById("download"),
 	run: document.getElementById("run"),
 	progress: document.getElementById("progress"),
+	advanced: document.getElementById("advanced"),
 };
 
 /** @type {import("@ffmpeg/ffmpeg").FFmpeg} */
@@ -30,6 +36,14 @@ async function register() {
 async function main() {
 	try {
 		if ("serviceWorker" in navigator) register();
+
+		// Persist the "advanced" details open/closed state
+		// NOTE: could be a nice custom element
+		elements.advanced.open = Boolean(localStorage.getItem("advanced"));
+		elements.advanced.addEventListener("toggle", () => {
+			if (elements.advanced.open) localStorage.setItem("advanced", "true");
+			else localStorage.removeItem("advanced");
+		});
 
 		ffmpeg.on("log", (event) => {
 			console.debug("@ffmpeg", event);
@@ -82,10 +96,12 @@ async function onFiles(files) {
 		elements.run.removeAttribute("disabled");
 	}
 
+	metadata.cover = null;
+
 	for (const file of files) {
 		const ok = await ffmpeg.writeFile(file.name, await fetchFile(file));
 		if (!ok) throw new Error("Failed to open file " + file.name);
-		console.debug("add", file.name);
+		debug("add " + file.name);
 
 		const info = await getInfo(file.name);
 
@@ -95,10 +111,8 @@ async function onFiles(files) {
 		if (!metadata.date) metadata.date = info.format.tags.date;
 		if (!metadata.cover) metadata.cover = await getCover(file.name);
 
-		console.debug("info", info);
-
-		elements.debug.innerHTML += JSON.stringify(info);
-		elements.debug.innerHTML += "\n---\n";
+		debug(JSON.stringify(info));
+		debug("---");
 
 		// https://ffmpegwasm.netlify.app/docs/api/ffmpeg/classes/FFmpeg#ffprobe
 	}
@@ -111,7 +125,7 @@ async function onFiles(files) {
 		elements.cover.alt = metadata.album;
 	}
 
-	elements.output.innerHTML = JSON.stringify(metadata, null, 2) + "\n";
+	debug(JSON.stringify(metadata, null, 2));
 }
 
 async function onRun() {
@@ -129,25 +143,30 @@ async function onRun() {
 	elements.progress.value = 0;
 	elements.progress.removeAttribute("disabled");
 
-	const data = await generate(files, cover, metadata);
-	if (!data) throw new Error("Failed to generate audiobook");
+	const data = await generate(files, cover, metadata).catch((error) => {
+		console.error(error);
+		output("ERROR: " + error);
+		return null;
+	});
 
 	elements.progress.setAttribute("disabled", "");
 
-	elements.download.removeAttribute("disabled");
-	elements.download.href = URL.createObjectURL(data);
-	elements.download.download = data.name;
+	if (data) {
+		elements.download.removeAttribute("disabled");
+		elements.download.href = URL.createObjectURL(data);
+		elements.download.download = data.name;
 
-	if (Notification?.permission === "granted") {
-		const n = new Notification("Audiobook finished", {
-			body: "Generating audiobook has completed",
-			icon: "/icon.png",
-		});
+		if (Notification?.permission === "granted") {
+			const n = new Notification("Audiobook finished", {
+				body: "Generating audiobook has completed",
+				icon: "/icon.png",
+			});
 
-		// The tab has become visible so clear the now-stale Notification.
-		n.addEventListener("visibilitychange", () => {
-			if (document.visibilityState === "visible") n.close();
-		});
+			// The tab has become visible so clear the now-stale Notification.
+			n.addEventListener("visibilitychange", () => {
+				if (document.visibilityState === "visible") n.close();
+			});
+		}
 	}
 }
 
@@ -186,7 +205,7 @@ async function getCover(filename) {
 		"error",
 	]);
 
-	console.debug("cover", filename, result);
+	debug("cover " + (result == 0 ? "found" : "miss"));
 	if (result !== 0) return null;
 
 	const data = await ffmpeg.readFile("cover.jpg");
@@ -196,6 +215,10 @@ async function getCover(filename) {
 
 function output(text) {
 	elements.output.innerHTML += text + "\n";
+}
+
+function debug(text) {
+	elements.debug.innerHTML += text + "\n";
 }
 
 /**
@@ -221,11 +244,11 @@ async function generate(files, cover, info = {}) {
 	entries.sort((a, b) => a.name.localeCompare(b.name));
 
 	// Generate the list.txt to concat the files together
-	const list = entries.map((f) => `file '${cleanName(f.name)}`).join("\n");
+	const list = entries.map((f) => `file '${cleanName(f.name)}'`).join("\n");
 	await ffmpeg.writeFile("list.txt", list);
 
-	output("--- list");
-	output(list);
+	debug("--- list");
+	debug(list);
 
 	// Generate the final metadata
 	const metadata = [`;FFMETADATA1`];
@@ -245,26 +268,33 @@ async function generate(files, cover, info = {}) {
 
 	await ffmpeg.writeFile("metadata.ini", metadata.join("\n"));
 
-	output("--- metadata");
-	output(metadata.join("\n"));
-	output("---");
+	debug("--- metadata");
+	debug(metadata.join("\n"));
+	debug("---");
 
 	if (cover) await ffmpeg.writeFile("cover.jpg", await fetchFile(cover));
 
 	// Concatenate all the audio files together and convert to AAC
-	output("combining…");
-	const combine = [
-		"-f",
-		"concat",
-		"-safe",
-		"0",
-		"-i",
-		"list.txt",
-		"-codec:a",
-		"aac",
-		"all.m4a",
-	];
-	output("> ffmpeg " + combine.join(" "));
+	output("Combining…");
+	const combine = ["-f", "concat", "-safe", "0", "-i", "list.txt"];
+
+	if (inputs.codec?.value) {
+		combine.push("-codec:a", inputs.codec.value);
+	}
+	if (inputs.sampleRate?.value) {
+		combine.push("-ar", inputs.sampleRate.value);
+	}
+	if (inputs.bitRate?.value) {
+		combine.push("-b:a", inputs.bitRate.value + "k");
+	}
+	if (inputs.bitDepth?.value) {
+		combine.push("-sample_fmt", "s" + inputs.bitDepth.value);
+	}
+	if (inputs.legacyDevice?.checked) {
+		combine.push("-aac_pns", "0");
+	}
+	combine.push("all.m4a");
+	debug("> ffmpeg " + combine.join(" "));
 	await ffmpeg.exec(combine);
 
 	// Combine the audio, cover & metadata together into a single m4b file
@@ -288,7 +318,7 @@ async function generate(files, cover, info = {}) {
 		"2",
 		"output.m4b",
 	];
-	output("> ffmpeg " + configure.join(" "));
+	debug("> ffmpeg " + configure.join(" "));
 	await ffmpeg.exec(configure);
 
 	const file = await ffmpeg.readFile("output.m4b");

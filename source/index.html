@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 	<head>
 		<meta charset="UTF-8" />
@@ -38,6 +38,69 @@
 									/>
 								</label>
 
+								<details id="advanced">
+									<summary>Advanced options</summary>
+									<cluster-layout align="flex-end">
+										<!-- https://ffmpeg.org/ffmpeg-codecs.html#Audio-Encoders -->
+										<label for="codec" class="label">
+											<span class="field-label">Audio codec</span>
+											<select name="codec" id="codec">
+												<option value="">passthrough</option>
+												<option value="aac" selected>AAC</option>
+												<option value="alac">ALAC</option>
+											</select>
+										</label>
+
+										<!-- https://github.com/audiojs/sample-rate#readme -->
+										<label for="sampleRate" class="label">
+											<span class="field-label">Sample rate</span>
+											<select name="sampleRate" id="sampleRate">
+												<option value="" selected>passthrough</option>
+												<option value="8000">8,000 Hz</option>
+												<option value="11025">11,025 Hz</option>
+												<option value="16000">16,000 Hz</option>
+												<option value="22050">22,050 Hz</option>
+												<option value="44100">44,100 Hz</option>
+												<option value="48200">48,000 Hz</option>
+												<option value="88200">88,200 Hz</option>
+												<option value="96000">96,000 Hz</option>
+											</select>
+										</label>
+
+										<label for="bitRate" class="label">
+											<span class="field-label">Bit rate</span>
+											<select name="bitRate" id="bitRate">
+												<option value="" selected>passthrough</option>
+												<option value="16">16 kbps</option>
+												<option value="32">32 kbps</option>
+												<option value="64">64 kbps</option>
+												<option value="128">128 kbps</option>
+												<option value="192">192 kbps</option>
+												<option value="256">256 kbps</option>
+											</select>
+										</label>
+
+										<label for="bitDepth" class="label">
+											<span class="field-label">Bit depth</span>
+											<select name="bitDepth" id="bitDepth">
+												<option value="" selected>passthrough</option>
+												<option value="16">16</option>
+												<option value="24">24</option>
+												<option value="32">32</option>
+											</select>
+										</label>
+
+										<label for="legacyDevice" class="checkbox">
+											<input
+												type="checkbox"
+												id="legacyDevice"
+												name="legacyDevice"
+											/>
+											<span> for iPod </span>
+										</label>
+									</cluster-layout>
+								</details>
+
 								<!-- <label class="field" for="artwork">
 									<span class="field-label">Artwork</span>
 									<input
@@ -64,7 +127,7 @@
 						</div>
 
 						<!-- Debug -->
-						<details open>
+						<details>
 							<summary>Debug</summary>
 							<pre id="debug"></pre>
 						</details>
