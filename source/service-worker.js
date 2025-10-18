@@ -1,4 +1,4 @@
-const version = "m4b-editor-001";
+const version = "m4b-editor-002";
 const assets = [
 	"/",
 	"/index.html",
