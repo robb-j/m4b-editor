@@ -37,6 +37,11 @@ async function main() {
 	try {
 		if ("serviceWorker" in navigator) register();
 
+		globalThis.addEventListener("unhandledrejection", (event) => {
+			console.error(event);
+			output("ERROR: " + event.reason);
+		});
+
 		// Persist the "advanced" details open/closed state
 		// NOTE: could be a nice custom element
 		elements.advanced.open = Boolean(localStorage.getItem("advanced"));
@@ -74,7 +79,7 @@ async function main() {
 		//
 	} catch (error) {
 		console.error(error);
-		alert("Something went wrong");
+		output("ERROR: " + error);
 	}
 }
 
