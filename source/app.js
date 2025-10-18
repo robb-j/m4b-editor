@@ -129,7 +129,7 @@ async function onFiles(files) {
 }
 
 async function onRun() {
-	Notification?.requestPermission();
+	globalThis?.Notification?.requestPermission();
 
 	if (elements.download.href) {
 		URL.revokeObjectURL(elements.download.href);
@@ -156,7 +156,7 @@ async function onRun() {
 		elements.download.href = URL.createObjectURL(data);
 		elements.download.download = data.name;
 
-		if (Notification?.permission === "granted") {
+		if (globalThis?.Notification?.permission === "granted") {
 			const n = new Notification("Audiobook finished", {
 				body: "Generating audiobook has completed",
 				icon: "/icon.png",
