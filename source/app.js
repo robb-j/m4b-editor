@@ -157,6 +157,8 @@ async function onRun() {
 	elements.progress.setAttribute("disabled", "");
 
 	if (data) {
+		output("Done!");
+		
 		elements.download.removeAttribute("disabled");
 		elements.download.href = URL.createObjectURL(data);
 		elements.download.download = data.name;
