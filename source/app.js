@@ -347,7 +347,7 @@ function getChapter(info, start = 0) {
 		"[CHAPTER]",
 		`TIMEBASE=1/1000`,
 		`START=${start}`,
-		`END=${start + duration}`,
+		`END=${start + duration - 100}`,
 		`TITLE=${info.format.tags.title}`,
 	].join("\n");
 
