@@ -4,6 +4,7 @@ import fs from "node:fs";
 import path from "node:path";
 import process from "node:process";
 import { execSync, exec } from "node:child_process";
+import { parseArgs } from "node:util";
 
 const usage = `
 usage:
@@ -14,19 +15,24 @@ options:
 	--help    show this help message
 	--debug   output extra debug information
 	--force   overwrite existing files
+	--format  what to convert to, default: alac
 `;
 
-// Parse CLI arguments
-const [inputDir, outputDir] = process.argv.slice(2);
+const cli = parseArgs({
+	args: process.argv.slice(2),
+	options: {
+		dryRun: { type: "boolean" },
+		help: { type: "boolean" },
+		debug: { type: "boolean" },
+		force: { type: "boolean" },
+		format: { type: "string", default: "alac" },
+	},
+	allowPositionals: true,
+});
 
-// Parse CLI options
-const options = {
-	dryRun:
-		process.argv.includes("--dryRun") || process.argv.includes("--dry-run"),
-	help: process.argv.includes("--help"),
-	debug: process.argv.includes("--debug"),
-	force: process.argv.includes("--force"),
-};
+// Parse CLI arguments
+const [inputDir, outputDir] = cli.positionals;
+const options = cli.values;
 
 // Console helpers
 const output = (str) => process.stdout.write(str);
@@ -78,7 +84,18 @@ function processFile(file) {
 	const metadata = getAudioMetadata(file);
 	debug("metadata", JSON.stringify(metadata));
 
-	const outfile = path.join(outputDir, relative);
+	let outfile = path
+		.join(outputDir, relative)
+		.replace(path.extname(relative), ".m4a");
+
+	// Pick a better name based on track metadata
+	if (metadata.format?.tags?.track && metadata.format?.tags.TITLE) {
+		const number = metadata.format.tags.track.padStart(2, "0");
+		outfile = path.join(
+			outputDir,
+			`${number} ${metadata.format.tags.TITLE}.m4a`,
+		);
+	}
 
 	// Ensure the output directory exists to put the file into
 	fs.mkdirSync(path.dirname(outfile), { recursive: true });
@@ -90,16 +107,20 @@ function processFile(file) {
 		return Promise.resolve();
 	}
 
+	const encoding =
+		cli.values.format === "aac"
+			? ["-codec:a", "aac", "-b:a", "256k"]
+			: ["-codec:a", "alac"];
+
 	const cmd = [
 		"ffmpeg",
 		"-i",
 		`"${file}"`,
 
 		// encoding
-		"-codec:a",
-		"aac",
-		"-b:a",
-		"256k",
+		...encoding,
+
+		// Copy tags
 		"-map_metadata",
 		"0",
 
